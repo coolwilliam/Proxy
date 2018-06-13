@@ -1,0 +1,26 @@
+local def = require("wys.define");
+
+local _M = {};
+
+_M.device_server_port=10002;
+_M.MAIN_HOST_DOMAIN="itv.wayos.com";
+_M.domain_ip=_M.MAIN_HOST_DOMAIN;
+_M.network_thread_count=4;
+_M.web_request_port = 10001;
+_M.proxy_client_port = 10003;
+
+--ssdb server ip 
+_M.SSDB_SERVER_IP="127.0.0.1";
+--ssdb server port
+_M.SSDB_SERVER_PORT=8888;
+
+-- web server root path
+_M.webSvrPath="/home/work/streamServer";
+
+-- web server SDK path
+_M.webSdkRootPath="/usr/local/wayosWebProSDK";
+
+-- oem
+_M.oem = def.EnumOem.main;
+
+return _M;

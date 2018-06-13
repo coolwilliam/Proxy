@@ -1,0 +1,65 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>E439935D-B2A2-46AE-856D-2AA408428F33</ProjectGuid>
+    <!--$guid1$-->
+    <ProjectHome>.</ProjectHome>
+    <StartupFile>
+    </StartupFile>
+    <SearchPath>
+    </SearchPath>
+    <WorkingDirectory>.</WorkingDirectory>
+    <OutputPath>.</OutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <DebugSymbols>true</DebugSymbols>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugSymbols>true</DebugSymbols>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+  <ItemGroup>
+    <Folder Include="lua_obj\" />
+    <Folder Include="lua_obj\lualib\" />
+    <Folder Include="lua_obj\lualib\resty\" />
+    <Folder Include="lua_obj\lualib\socket\" />
+    <Folder Include="lua_obj\lualib\wys\" />
+    <Folder Include="lua_obj\lualib\xml\" />
+    <Folder Include="lua_obj\lua\" />
+    <Folder Include="lua_obj\lua\bin\" />
+    <Folder Include="lua_obj\web_api_test\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="lua_obj\lobj.lua" />
+    <Compile Include="lua_obj\lualib\ltn12.lua" />
+    <Compile Include="lua_obj\lualib\mime.lua" />
+    <Compile Include="lua_obj\lualib\resty\cbsdb.lua" />
+    <Compile Include="lua_obj\lualib\socket.lua" />
+    <Compile Include="lua_obj\lualib\socket\ftp.lua" />
+    <Compile Include="lua_obj\lualib\socket\http.lua" />
+    <Compile Include="lua_obj\lualib\socket\smtp.lua" />
+    <Compile Include="lua_obj\lualib\socket\tp.lua" />
+    <Compile Include="lua_obj\lualib\socket\url.lua" />
+    <Compile Include="lua_obj\lualib\wys\config.lua" />
+    <Compile Include="lua_obj\lualib\wys\define.lua" />
+    <Compile Include="lua_obj\lualib\wys\wysdb.lua" />
+    <Compile Include="lua_obj\lualib\xml\LuaXml.lua" />
+    <Compile Include="lua_obj\lua\bin\common_function.lua" />
+    <Compile Include="lua_obj\lua\bin\c_log.lua" />
+    <Compile Include="lua_obj\lua\bin\data_define.lua" />
+    <Compile Include="lua_obj\lua\bin\enum.lua" />
+    <Compile Include="lua_obj\lua\wys_srv.lua" />
+    <Compile Include="lua_obj\web_api_test\cppWebApiTest.lua" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="lua_obj\compile_lua.sh" />
+    <Content Include="lua_obj\lualib\cjson.so" />
+    <Content Include="lua_obj\lualib\iconv.so" />
+    <Content Include="lua_obj\lualib\socket\core.so" />
+    <Content Include="lua_obj\lualib\xml\LuaXML_lib.so" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" />
+</Project>

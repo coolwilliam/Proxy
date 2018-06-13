@@ -1,0 +1,62 @@
+{
+    "login": {
+        "ident_code": ""
+    },
+
+    "login_ack": {
+        "status": true, // or false
+        "message": ""
+    },
+
+    "heart_beat": {
+        //empty
+    },
+
+    "heart_beat_ack": {
+        "time_span": "" // timespan in seconds
+    },
+
+    "request_command": {
+        "cmd": "", //如 proxy_request
+        "param": {
+            //如 proxy_request的参数内容
+        }
+    },
+
+    //向设备发送的命令
+    "proxy_request": {
+        "session_id": "",
+        "client_proxy_port": "",
+        "server_proxy_ip": "",
+        "server_proxy_port": ""
+    },
+
+    "proxy_request_ack": {
+        "session_id": "",
+        "ident_code": "",
+        "status": true, //or false
+        "message": "",
+        "client_proxy_port": ""
+    },
+
+    "web_request_command": {
+        "cmd": "",
+        "param": {
+
+        }
+    },
+
+    "web_proxy_request": {
+        "ident_code": "",
+        "client_proxy_port": ""
+    },
+
+    "web_proxy_request_ack": {
+        "ident_code": "",
+        "status": true, // or false
+        "message": "",
+        "client_proxy_port": "",
+        "server_proxy_ip": "",
+        "server_proxy_port": ""
+    }
+}

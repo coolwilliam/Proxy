@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+  <plugin enable="1" name="log"/>
+  <plugin enable="1" name="backtrace"/>
+  <plugin enable="0" name="iptables"/>
+</root>

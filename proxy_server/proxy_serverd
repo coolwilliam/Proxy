@@ -1,0 +1,102 @@
+#!/bin/bash
+
+# proxy_serverd
+# chkconfig: 2345 70 30
+# description: iptv_serverd 
+#	This server devides interfaces to control online devices.
+
+SERVER_DIR=/home/work/wx_svr
+SERVER_BIN=proxy_server
+SERVER_MAIN_SCRIPTS=server.sh
+SERVER_HIDE_SCRIPTS=.$SERVER_BIN
+SERVER_MONITOR_SCRIPTS=$SERVER_BIN""_monitor.sh
+SERVER=$SERVER_BIN""d
+SERVER_CONFIG_FILE=$SERVER_BIN.config
+SERVER_LOCK=/var/run/$SERVER_BIN"".pid
+
+SERVER_PATH=$SERVER_DIR/$SERVER_BIN
+SERVER_CONFIG_PATH=$SERVER_DIR/$SERVER_CONFIG_FILE
+SERVER_MAIN_SCRIPTS_PATH=$SERVER_DIR/$SERVER_MAIN_SCRIPTS
+SERVER_HIDE_SCRIPTS_PATH=$SERVER_DIR/$SERVER_HIDE_SCRIPTS
+
+INIT_DIR=`pwd`
+
+
+DESC="Iptv Server"
+
+ARGS=""
+
+# Do some checking
+test -f $SERVER_PATH || echo "$SERVER_PATH does'n exists!" || exit 0
+test -f $SERVER_CONFIG_PATH || echo "$SERVER_CONFIG_PATH does'n exists!" || exit 0
+test -f $SERVER_MAIN_SCRIPTS_PATH || echo "$SERVER_MAIN_SCRIPTS_PATH does'n exists!" || exit 0
+test -f $SERVER_HIDE_SCRIPTS_PATH || echo "$SERVER_HIDE_SCRIPTS_PATH does'n exists!" || exit 0
+
+status()
+{
+	local stat
+
+	if [ -f $SERVER_LOCK ];then
+		stat=true
+	else
+		stat=false
+	fi
+        
+	echo $stat
+}
+
+case "$1" in
+  start)
+	echo "Starting $DESC:"
+	
+	ret=`status`
+	if [ $ret = "true" ];then
+		echo "$SERVER is already started, please stop it first!"
+		exit $?
+	fi
+	
+	cd $SERVER_DIR
+
+	$SERVER_MAIN_SCRIPTS_PATH $ARGS &
+	
+	cd $INIT_DIR
+	;;
+  stop)
+	[ -z "$2" ] && echo "Stopping $DESC: "
+	killall $SERVER_MONITOR_SCRIPTS
+	killall $SERVER_HIDE_SCRIPTS
+	killall $SERVER_BIN
+	sleep 3
+	rm -f $SERVER_LOCK
+	;;
+  restart)
+	bash $0 stop 
+	sleep 3
+	bash $0 start
+	;;
+  status)
+	ret=`status`;
+	if [ $ret = "true" ];then
+		pid=$(<$SERVER_LOCK)
+		echo "$SERVER is running, pid=$pid ."
+	else
+		echo "$SERVER is not running."
+	fi
+	;;
+  watch)
+	ret=`status`
+
+	if [ $ret = "true" ];then
+		pid=$(<$SERVER_LOCK)
+		top -p $pid
+	else
+		echo "$SERVER is not running."
+	fi
+	;;
+  *)
+    echo "Usage: /etc/init.d/$SERVER {start|stop|restart|status|watch}"
+    exit 1
+	;;
+esac
+
+exit 0

@@ -1,0 +1,156 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{4B06E474-74D3-48DE-AD6D-425D9AB6574C}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>proxy_server</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <IncludePath>E:\wuht\Packages\boost_1_57_0\boost_1_57_0;E:\wuht\Packages\LuaJIT-2.1.0-beta3\src;E:\wuht\Packages\curl-7.38.0\curl-7.38.0\include;$(ProjectDir)include;$(SolutionDir)server_frame\include;$(SolutionDir)server_frame\server_frame_tools\include;$(SolutionDir)server_frame\server_frame_business\include;$(SolutionDir)server_frame\server_frame_network\include;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="include\crc32.h" />
+    <ClInclude Include="include\data_package.h" />
+    <ClInclude Include="include\debug_printer.h" />
+    <ClInclude Include="include\device.h" />
+    <ClInclude Include="include\device_data_handler.h" />
+    <ClInclude Include="include\device_manager.h" />
+    <ClInclude Include="include\encode_function.h" />
+    <ClInclude Include="include\inner_def.h" />
+    <ClInclude Include="include\jhl_crypto.h" />
+    <ClInclude Include="include\jhl_md5.h" />
+    <ClInclude Include="include\lua_operator.h" />
+    <ClInclude Include="include\lua_task.h" />
+    <ClInclude Include="include\MD5.h" />
+    <ClInclude Include="include\msg_define.h" />
+    <ClInclude Include="include\msg_function.h" />
+    <ClInclude Include="include\plugin_log_adapter.h" />
+    <ClInclude Include="include\plugin_log_msg.h" />
+    <ClInclude Include="include\port_manager.h" />
+    <ClInclude Include="include\ptr_define.h" />
+    <ClInclude Include="include\request_data_handler.h" />
+    <ClInclude Include="include\server.h" />
+    <ClInclude Include="include\proxy_server_data_handler.h" />
+    <ClInclude Include="include\proxy_client_data_handler.h" />
+    <ClInclude Include="include\session_id_creator.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="source\crc32.cpp" />
+    <ClCompile Include="source\data_package.cpp" />
+    <ClCompile Include="source\debug_printer.cpp" />
+    <ClCompile Include="source\device.cpp" />
+    <ClCompile Include="source\device_data_handler.cpp" />
+    <ClCompile Include="source\device_manager.cpp" />
+    <ClCompile Include="source\encode_function.cpp" />
+    <ClCompile Include="source\inner_def.cpp" />
+    <ClCompile Include="source\jhl_crypto.cpp" />
+    <ClCompile Include="source\jhl_md5.cpp" />
+    <ClCompile Include="source\lua_operator.cpp" />
+    <ClCompile Include="source\lua_task.cpp" />
+    <ClCompile Include="source\main.cpp" />
+    <ClCompile Include="source\MD5.cpp" />
+    <ClCompile Include="source\msg_define.cpp" />
+    <ClCompile Include="source\msg_function.cpp" />
+    <ClCompile Include="source\plugin_log_adapter.cpp" />
+    <ClCompile Include="source\port_manager.cpp" />
+    <ClCompile Include="source\request_data_handler.cpp" />
+    <ClCompile Include="source\server.cpp" />
+    <ClCompile Include="source\proxy_server_data_handler.cpp" />
+    <ClCompile Include="source\proxy_client_data_handler.cpp" />
+    <ClCompile Include="source\session_id_creator.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="doc\流程描述.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include=".iptv_server" />
+    <None Include="auto_pack.sh" />
+    <None Include="doc\msg_define.json" />
+    <None Include="env.sh" />
+    <None Include="install.sh" />
+    <None Include="Makefile" />
+    <None Include="oem_configs\main.tmp" />
+    <None Include="server.sh" />
+    <None Include="uninstall.sh" />
+    <None Include="urconfig.properties" />
+    <None Include="iptv_server.config" />
+    <None Include="iptv_serverd" />
+    <None Include="iptv_server_monitor.sh" />
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="plugins.xml" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

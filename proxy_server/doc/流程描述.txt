@@ -1,0 +1,6 @@
+web 代理流程
+	http server 请求一个设备的远程代理，iptv_server 通过识别LR的值，通知对应设备的客户端建立代理连接，进行http推送
+ssh 代理流程
+	http server 请求一个打开ssh代理服务的请求，然后iptv_server开启一个服务对应到在线的设备上，并且单独分配一个端口号用于访问
+	当有ssh请求连接时 让对应设备iptv_client 反向链接到iptv_server 并且 iptv_client 要连接到本地的ssh
+	然后将ssh报文数据传输到对应设备反向连接的会话中进行交互

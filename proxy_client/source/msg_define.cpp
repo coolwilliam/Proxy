@@ -1,0 +1,18 @@
+#include "msg_define.h"
+
+#define ADD_CMD_STR(em_cmd) {#em_cmd}
+
+cmd_str_t g_cmd_str[] =
+{
+	ADD_CMD_STR(CMD_UNKOWN),
+	ADD_CMD_STR(CMD_LOGIN),
+	ADD_CMD_STR(CMD_LOGIN_ACK),
+
+	ADD_CMD_STR(CMD_PROXY_REQUEST),
+	ADD_CMD_STR(CMD_PROXY_REQUEST_ACK),
+
+	ADD_CMD_STR(CMD_HEART_BEAT),
+	ADD_CMD_STR(CMD_HEART_BEAT_ACK),
+
+	ADD_CMD_STR(CMD_MAX)
+};
