@@ -265,14 +265,27 @@ bool client::client_init()
 	RAPIDJSON_NAMESPACE::Document doc_login;
 	doc_login.SetObject();
 	RAPIDJSON_NAMESPACE::Document::AllocatorType& doc_alloc = doc_login.GetAllocator();
-	std::string str_ident_code;
+	std::string str_ident_code, str_client_type;
 	bool b_get = config->get(device_id, str_ident_code);
 	if (false == b_get)
 	{
 		LOG_ERROR("Get device id failed!");
 		return false;
 	}
-	doc_login.AddMember(RAPIDJSON_NAMESPACE::StringRef("ident_code"), RAPIDJSON_NAMESPACE::StringRef(str_ident_code.c_str()), doc_alloc);
+	else
+	{
+		doc_login.AddMember(RAPIDJSON_NAMESPACE::StringRef("ident_code"), RAPIDJSON_NAMESPACE::StringRef(str_ident_code.c_str()), doc_alloc);
+	}
+
+	b_get = config->get(client_type, str_client_type);
+	if (false == b_get)
+	{
+		LOG_TRACE("No client_type item in configure!");
+	}
+	else
+	{
+		doc_login.AddMember(RAPIDJSON_NAMESPACE::StringRef(client_type), RAPIDJSON_NAMESPACE::StringRef(str_client_type.c_str()), doc_alloc);
+	}
 
 	RAPIDJSON_NAMESPACE::StringBuffer buff;
 	RAPIDJSON_NAMESPACE::Writer<RAPIDJSON_NAMESPACE::StringBuffer> writer(buff);

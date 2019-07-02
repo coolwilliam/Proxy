@@ -26,7 +26,7 @@ public:
 private:
 	typedef boost::unordered_map<common_session_ptr, web_req_session_buffer_ptr> map_session_buffer_t;
 	void add_session_buff(const map_session_buffer_t::value_type& item);
-	void get_session_buff(const map_session_buffer_t::key_type key, map_session_buffer_t::mapped_type& value_out) const;
+	void get_session_buff(const map_session_buffer_t::key_type key, map_session_buffer_t::mapped_type& value_out);
 	void del_session_buff(const map_session_buffer_t::key_type key);
 	void asyn_close_session(common_session_ptr session);
 	int decode_msg(common_session_ptr session, web_req_session_buffer_ptr css);

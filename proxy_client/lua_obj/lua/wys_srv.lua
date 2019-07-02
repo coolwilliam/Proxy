@@ -33,14 +33,14 @@ function get_config(rid, parms)
     local interface_module = "iptvauth";
     local stat, ret = pcall(require, interface_module);
     if not stat then
-        c_log.log4cpp(c_log.ELL_ERROR, "Reuire " .. interface_module .. " failed! Error message: " .. ret);
+        c_log.log4cpp(c_log.ELL_ERROR, "Require " .. interface_module .. " failed! Error message: " .. ret);
     else
         local interface = ret;
         stat, ret = interface.state();
         if stat then
             cf.device_id = ret.serial;
         else
-            c_log.log4cpp(c_log.ELL_ERROR, "Call interface.getIdCode failed! Error message:" .. ret);
+            c_log.log4cpp(c_log.ELL_ERROR, "Call interface.state failed! Error message:" .. ret);
         end
     end
     

@@ -1,0 +1,20 @@
+#!/bin/bash
+
+C_PATH=`pwd`
+
+. $C_PATH/env.sh
+
+proc_name=iptv_client
+
+killall $proc_name
+
+while [ 1 ]
+do
+#	$C_PATH/$proc_name 2>&1 | tee $C_PATH/all_log.txt
+	$C_PATH/$proc_name >/dev/null 2>&1
+	mkdir -p $C_PATH/log
+	date +'%Y-%m-%d %H:%M:%S' >> $C_PATH/log/crash_log.txt
+	echo 'C++ Server Restart!!!' >> $C_PATH/log/crash_log.txt
+	sleep 3
+done
+

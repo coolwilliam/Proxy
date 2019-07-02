@@ -23,4 +23,10 @@ _M.webSdkRootPath="/usr/local/wayosWebProSDK";
 -- oem
 _M.oem = def.EnumOem.main;
 
+-- proxy receive buffer cache size (bytes)
+_M.proxy_receive_cache_size=1024*1024
+
+-- proxy server port only for localhost
+_M.proxy_for_lo_only = true;
+
 return _M;

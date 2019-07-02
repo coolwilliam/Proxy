@@ -234,7 +234,8 @@ void server::server_init()
 	config->get(proxy_client_port, proxy_clt_port);
 
 	boost::asio::ip::tcp::endpoint ep_dev(boost::asio::ip::tcp::v4(), device_svr_port);
-	boost::asio::ip::tcp::endpoint ep_wr(boost::asio::ip::tcp::v4(), web_req_port);
+	//boost::asio::ip::tcp::endpoint ep_wr(boost::asio::ip::tcp::v4(), web_req_port);
+	boost::asio::ip::tcp::endpoint ep_wr(boost::asio::ip::address_v4::from_string("127.0.0.1"), web_req_port);
 	boost::asio::ip::tcp::endpoint ep_pc(boost::asio::ip::tcp::v4(), proxy_clt_port);
 
 	common_server_ptr svr_dev = common_server_ptr(new common_server(m_ios, ep_dev));

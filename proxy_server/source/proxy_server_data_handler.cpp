@@ -27,12 +27,25 @@ proxy_server_data_handler::~proxy_server_data_handler()
 
 bool proxy_server_data_handler::on_received_data(common_session_ptr session, const string & str_data)
 {
+	LOG_TRACE("Received size:" << str_data.size() << ", content: " << std::endl << str_data);
 	session_connection_ptr s_con = session_connection_manager::instance().find_session_connection(session);
 	if (NULL != s_con)
 	{
+		common_session_ptr the_other = s_con->get_other(session);
+		std::ostringstream tmp_oss;
+		if (NULL != the_other)
+		{
+			tmp_oss << the_other.get();
+		}
+
+		LOG_TRACE("Found session connection for session " << session.get() << ", id:" << s_con->get_session_id() << ", the other session:" << (!tmp_oss.str().empty() ? tmp_oss.str() : "Null"));
 		data_buffer_ptr new_buff = data_buffer_ptr(new data_buffer);
 		new_buff->write_byte_array(str_data.c_str(), str_data.size());
 		s_con->send_data(new_buff, session);
+	}
+	else
+	{
+		LOG_ERROR("No session connection for session " << session.get());
 	}
 	return true;
 }
@@ -50,6 +63,15 @@ bool proxy_server_data_handler::on_session_accept(common_session_ptr new_session
 		device::port_t dest_port = 0;
 		if (dev->get_dest_port(svr_proxy_port, dest_port))
 		{
+			// 设置代理接收缓存大小
+			unsigned int proxy_cache_size = 0;
+			simple_kv_config_ptr cfg = server::instance().get_config();
+			cfg->get(proxy_recv_cache_size, proxy_cache_size);
+			if (proxy_cache_size > 0)
+			{
+				new_session->set_recv_cache_size(proxy_cache_size);
+			}
+
 			session_connection::session_id_t s_id = session_id_creator::create_session_id();
 			session_connection_ptr s_con = session_connection_ptr(new session_connection(new_session, common_session_ptr((common_session*)NULL), s_id));
 			s_con->set_close_on_destroy(false);
@@ -65,7 +87,6 @@ bool proxy_server_data_handler::on_session_accept(common_session_ptr new_session
 			param_value.AddMember("session_id", s_id, req_alloc);
 			param_value.AddMember("client_proxy_port", dest_port, req_alloc);
 			std::string str_host;
-			simple_kv_config_ptr cfg = server::instance().get_config();
 			cfg->get(domain_ip, str_host);
 			param_value.AddMember("server_proxy_ip", RAPIDJSON_NAMESPACE::StringRef(str_host.c_str(), str_host.size()), req_alloc);
 			device::port_t svr_prx_port = 0;
@@ -92,7 +113,7 @@ bool proxy_server_data_handler::on_session_accept(common_session_ptr new_session
 		else
 		{
 			LOG_ERROR("No dest port for server proxy port[" << svr_proxy_port << "] on device [" << get_dev_id() << "]!");
-			new_session->close();
+			new_session->get_socket().get_io_service().post(boost::bind(&proxy_server_data_handler::asyn_close_session, this, new_session));
 		}
 	}
 	else

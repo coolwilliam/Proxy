@@ -3,6 +3,7 @@
 #include "msg_define.h"
 #include "data_package.h"
 #include "encode_function.h"
+#include "server.h"
 
 /*server frame headers*/
 #include "data_buffer.h"
@@ -29,13 +30,23 @@ bool proxy_client_data_handler::on_received_data(common_session_ptr session, con
 	{
 		is_new_session = buff->is_new;
 	}
+	else
+	{
+		LOG_ERROR("Session:" << session.get() << ", receive buff is null!");
+		return false;
+	}
 
-	data_buffer_ptr recv_buff = data_buffer_ptr(new data_buffer);
+	data_buffer_ptr recv_buff = buff->buffer;
 	recv_buff->write_byte_array(str_data.c_str(), str_data.size());
 
 	if (is_new_session)
 	{
-		
+		if (recv_buff->get_data_length() < sizeof(msg_head_t))
+		{
+			LOG_TRACE("Buffer length: " << recv_buff->get_data_length() << " < " << "sizeof(msg_head_t): " << sizeof(msg_head_t) << ". Continue ...");
+			return true;
+		}
+
 		msg_head_t header;
 		memset(&header, 0x00, sizeof(header));
 		data_package::unpack(data_package::es_header, &header, *recv_buff);
@@ -58,7 +69,7 @@ bool proxy_client_data_handler::on_received_data(common_session_ptr session, con
 			|| header.aes_flag >= AES_ENCODE_MAX || header.aes_flag < AES_ENCODE_NO)
 		{
 			LOG_ERROR("Buffer header check failed");
-			session->close();
+			session->get_socket().get_io_service().post(boost::bind(&proxy_client_data_handler::asyn_close_session, this, session));
 			return false;
 		}
 
@@ -67,9 +78,9 @@ bool proxy_client_data_handler::on_received_data(common_session_ptr session, con
 		//检查是否接收完整包体
 		if (surplus_len < header.data_len)
 		{
-			LOG_ERROR("Buffer surplus length: " << surplus_len << " < " << "data_len: " << header.data_len);
-
-			return false;
+			LOG_ERROR("Buffer surplus length: " << surplus_len << " < " << "data_len: " << header.data_len << ". Continue ...");
+			recv_buff->reset_readpos();
+			return true;
 		}
 
 		_u8* body = (_u8 *)(recv_buff->get_data() + recv_buff->get_readpos());
@@ -115,7 +126,7 @@ bool proxy_client_data_handler::on_received_data(common_session_ptr session, con
 		if (doc.HasParseError())
 		{
 			LOG_ERROR("Decode json failed! Json:" << str_body);
-			session->close();
+			session->get_socket().get_io_service().post(boost::bind(&proxy_client_data_handler::asyn_close_session, this, session));
 			return false;
 		}
 
@@ -146,11 +157,21 @@ bool proxy_client_data_handler::on_received_data(common_session_ptr session, con
 				{
 					// 2、解出代理会话ID，并设置到会话联接中，推送会话缓存，进行交互
 					session_connection::session_id_t s_id = param_value[member_session_id].GetInt64();
+					bool ack_status = param_value[member_status].GetBool();
+					std::string ack_message = param_value[member_message].GetString();
 					session_connection_ptr sc = session_connection_manager::instance().find_session_connection(s_id);
 					if (NULL != sc)
 					{
 						sc->set_session(session);
-						sc->send_cache();
+						if (!ack_status)
+						{
+							LOG_ERROR("Proxy failed! Error message: " << ack_message);
+							session->get_socket().get_io_service().post(boost::bind(&proxy_client_data_handler::asyn_close_session, this, session));
+						}
+						else
+						{
+							sc->send_cache();
+						}
 					}
 					else
 					{
@@ -173,6 +194,7 @@ bool proxy_client_data_handler::on_received_data(common_session_ptr session, con
 		}
 
 		buff->is_new = false;
+		buff->buffer->clear_data(0, buff->buffer->get_readpos() + header.data_len);
 	}
 	else
 	{
@@ -180,8 +202,11 @@ bool proxy_client_data_handler::on_received_data(common_session_ptr session, con
 		session_connection_ptr sc = session_connection_manager::instance().find_session_connection(session);
 		if (NULL != sc)
 		{
+			data_buffer_ptr recv_buff = data_buffer_ptr(new data_buffer);
+			recv_buff->write_byte_array(buff->buffer->get_data(), buff->buffer->get_data_length());
 			LOG_TRACE("Found session id " << sc->get_session_id() << ", local session " << session.get() << ", the other session " << sc->get_other(session).get());
 			sc->send_data(recv_buff, session);
+			buff->buffer->clear_data();
 		}
 		else
 		{
@@ -204,6 +229,15 @@ bool proxy_client_data_handler::on_session_accept(common_session_ptr new_session
 		new_buff->buffer = data_buffer_ptr(new data_buffer);
 		new_buff->is_new = true;
 		add_session_buff(make_pair(new_session, new_buff));
+
+		// 设置代理接收缓存大小
+		simple_kv_config_ptr cfg = server::instance().get_config();
+		unsigned int proxy_cache_size = 0;
+		cfg->get(proxy_recv_cache_size, proxy_cache_size);
+		if (proxy_cache_size > 0)
+		{
+			new_session->set_recv_cache_size(proxy_cache_size);
+		}
 	}
 
 	return true;
@@ -211,7 +245,6 @@ bool proxy_client_data_handler::on_session_accept(common_session_ptr new_session
 
 int proxy_client_data_handler::on_session_close(common_session_ptr session, const string & str_remote_ip)
 {
-	del_session_buff(session);
 	session_connection_ptr sc = session_connection_manager::instance().find_session_connection(session);
 	if (NULL != sc)
 	{
@@ -223,6 +256,7 @@ int proxy_client_data_handler::on_session_close(common_session_ptr session, cons
 		}
 		session_connection_manager::instance().delete_session_connection(sc->get_session_id());
 	}
+	del_session_buff(session);
 	return 0;
 }
 

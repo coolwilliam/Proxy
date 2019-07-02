@@ -51,7 +51,7 @@ bool request_data_handler::on_received_data(common_session_ptr session, const st
 				LOG_ERROR("Package error, so close the socket, session: " << session.get());
 
 				//关闭连接
-				session->close();
+				session->get_socket().get_io_service().post(boost::bind(&request_data_handler::asyn_close_session, this, session));
 				return false;
 			}
 		}
@@ -140,7 +140,18 @@ int request_data_handler::decode_msg(common_session_ptr session, web_req_session
 
 						//FIXME: 
 						// 1、启动一个代理服务
-						boost::asio::ip::tcp::endpoint ep_proxy(boost::asio::ip::tcp::v4(), svr_port);
+						//boost::asio::ip::tcp::endpoint ep_proxy(boost::asio::ip::tcp::v4(), svr_port);
+						// 获取是否只监听本地代理端口
+						bool only_for_lo = false;
+						if (!server::instance().get_config()->get(proxy_for_lo_only, only_for_lo))
+						{
+							only_for_lo = false;
+						}
+
+						boost::asio::ip::tcp::endpoint ep_proxy = only_for_lo ?
+							boost::asio::ip::tcp::endpoint(boost::asio::ip::address_v4::from_string("127.0.0.1"), svr_port) : 
+							boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), svr_port);
+
 						common_server_ptr svr_proxy = common_server_ptr(new common_server(server::instance().get_ios(), ep_proxy));
 						proxy_server_data_handler* p_psdh = new proxy_server_data_handler;
 						p_psdh->set_dev_id(dev->get_id());
@@ -245,6 +256,8 @@ int request_data_handler::on_session_error(common_session_ptr session, int err_c
 
 void request_data_handler::add_session_buff(const map_session_buffer_t::value_type& item)
 {
+	boost::mutex::scoped_lock lck(m_mtx_session_buff);
+
 	map_session_buffer_t::iterator it_find = m_map_session_buff.find(item.first);
 	if (it_find != m_map_session_buff.end())
 	{
@@ -256,8 +269,10 @@ void request_data_handler::add_session_buff(const map_session_buffer_t::value_ty
 	}
 }
 
-void request_data_handler::get_session_buff(const map_session_buffer_t::key_type key, map_session_buffer_t::mapped_type& value_out) const
+void request_data_handler::get_session_buff(const map_session_buffer_t::key_type key, map_session_buffer_t::mapped_type& value_out)
 {
+	boost::mutex::scoped_lock lck(m_mtx_session_buff);
+
 	map_session_buffer_t::const_iterator it_find = m_map_session_buff.find(key);
 	if (it_find != m_map_session_buff.end())
 	{
@@ -267,6 +282,8 @@ void request_data_handler::get_session_buff(const map_session_buffer_t::key_type
 
 void request_data_handler::del_session_buff(const map_session_buffer_t::key_type key)
 {
+	boost::mutex::scoped_lock lck(m_mtx_session_buff);
+
 	m_map_session_buff.erase(key);
 }
 

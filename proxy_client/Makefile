@@ -41,7 +41,7 @@ OBJ = $(patsubst %.cpp,${DIR_OBJ}/%.o,$(notdir ${SRC}))
 
 MACROS:= -DBOOST_SPIRIT_THREADSAFE -DBOOST_ALL_DYN_LINK
 
-TARGET = proxy_client 
+TARGET = iptv_client 
 CXX = g++
 CFLAGS := $(DIR_INC) -Wall -fexceptions $(MACROS) -Wl,-z,defs
 LD_FLAGS := -Wall -fexceptions $(MACROS) -Wl,-z,defs

@@ -33,12 +33,13 @@ public:
 private:
 	typedef boost::unordered_map<common_session_ptr, device_session_buffer_ptr> map_session_buffer_t;
 	void add_session_buff(const map_session_buffer_t::value_type& item);
-	void get_session_buff(const map_session_buffer_t::key_type key, map_session_buffer_t::mapped_type& value_out) const;
+	void get_session_buff(const map_session_buffer_t::key_type key, map_session_buffer_t::mapped_type& value_out);
 	void del_session_buff(const map_session_buffer_t::key_type key);
 	void modify_session_buff(const map_session_buffer_t::key_type key, const device::id_t& new_id);
 	int decode_msg(common_session_ptr session, device_session_buffer_ptr dsb);
 	void parse_msg(common_session_ptr session, const device::id_t& dev_id, const msg_head_t& header, const std::string& str_body);
 	void process_by_lua(enum_lua_cmd_type lua_cmd, const msg_head_t& header, const device::id_t& local_dev_id, const std::string& str_body);
+	void asyn_close_session(common_session_ptr session);
 private:
 	map_session_buffer_t	m_map_session_buff;
 

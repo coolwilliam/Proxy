@@ -209,6 +209,8 @@ int request_data_handler::on_session_error(common_session_ptr session, int err_c
 
 void request_data_handler::add_session_buff(const map_session_buffer_t::value_type& item)
 {
+	boost::mutex::scoped_lock lck(m_mtx_session_buff);
+
 	map_session_buffer_t::iterator it_find = m_map_session_buff.find(item.first);
 	if (it_find != m_map_session_buff.end())
 	{
@@ -220,8 +222,10 @@ void request_data_handler::add_session_buff(const map_session_buffer_t::value_ty
 	}
 }
 
-void request_data_handler::get_session_buff(const map_session_buffer_t::key_type key, map_session_buffer_t::mapped_type& value_out) const
+void request_data_handler::get_session_buff(const map_session_buffer_t::key_type key, map_session_buffer_t::mapped_type& value_out)
 {
+	boost::mutex::scoped_lock lck(m_mtx_session_buff);
+	
 	map_session_buffer_t::const_iterator it_find = m_map_session_buff.find(key);
 	if (it_find != m_map_session_buff.end())
 	{
@@ -231,6 +235,8 @@ void request_data_handler::get_session_buff(const map_session_buffer_t::key_type
 
 void request_data_handler::del_session_buff(const map_session_buffer_t::key_type key)
 {
+	boost::mutex::scoped_lock lck(m_mtx_session_buff);
+
 	m_map_session_buff.erase(key);
 }
 

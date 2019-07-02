@@ -48,6 +48,8 @@ config_declare(domain_ip);
 config_declare(device_id);
 config_declare(heartbeat_time);
 config_declare(device_request_port);
+config_declare(client_type);
+config_declare(proxy_recv_cache_size);
 //}}
 
 enum enum_package_status

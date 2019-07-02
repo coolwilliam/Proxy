@@ -50,6 +50,8 @@ config_declare(device_server_port);
 config_declare(web_request_port);
 config_declare(proxy_client_port);
 config_declare(domain_ip);
+config_declare(proxy_recv_cache_size);
+config_declare(proxy_for_lo_only);
 //}}
 
 enum enum_package_status

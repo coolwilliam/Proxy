@@ -46,7 +46,7 @@ bool device_data_handler::on_received_data(common_session_ptr session, const str
 				LOG_ERROR("Package error, so close the socket, session: " << session.get());
 
 				//¹Ø±ÕÁ¬½Ó
-				session->close();
+				session->get_socket().get_io_service().post(boost::bind(&device_data_handler::asyn_close_session, this, session));
 				return false;
 			}
 		}
@@ -85,8 +85,7 @@ int device_data_handler::on_session_close(common_session_ptr session, const stri
 		device_ptr dev = device_manager::instance().get(buff->dev_id);
 		if (NULL != dev)
 		{
-			dev->stop_all_server();
-			device_manager::instance().del(dev->get_id());
+			device_manager::instance().del(dev->get_id(), session);
 
 			LOG_ERROR("Device [" << buff->dev_id << "] is offline");
 		}
@@ -109,6 +108,8 @@ int device_data_handler::on_session_error(common_session_ptr session, int err_co
 
 void device_data_handler::add_session_buff(const map_session_buffer_t::value_type& item)
 {
+	boost::mutex::scoped_lock lck(m_mtx_session_buff);
+
 	map_session_buffer_t::iterator it_find = m_map_session_buff.find(item.first);
 	if (it_find != m_map_session_buff.end())
 	{
@@ -120,8 +121,10 @@ void device_data_handler::add_session_buff(const map_session_buffer_t::value_typ
 	}
 }
 
-void device_data_handler::get_session_buff(const map_session_buffer_t::key_type key, map_session_buffer_t::mapped_type& value_out) const
+void device_data_handler::get_session_buff(const map_session_buffer_t::key_type key, map_session_buffer_t::mapped_type& value_out)
 {
+	boost::mutex::scoped_lock lck(m_mtx_session_buff);
+
 	map_session_buffer_t::const_iterator it_find = m_map_session_buff.find(key);
 	if (it_find != m_map_session_buff.end())
 	{
@@ -131,11 +134,15 @@ void device_data_handler::get_session_buff(const map_session_buffer_t::key_type 
 
 void device_data_handler::del_session_buff(const map_session_buffer_t::key_type key)
 {
+	boost::mutex::scoped_lock lck(m_mtx_session_buff);
+
 	m_map_session_buff.erase(key);
 }
 
 void device_data_handler::modify_session_buff(const map_session_buffer_t::key_type key, const device::id_t& new_id)
 {
+	boost::mutex::scoped_lock lck(m_mtx_session_buff);
+
 	map_session_buffer_t::iterator it_find = m_map_session_buff.find(key);
 	if (it_find != m_map_session_buff.end())
 	{
@@ -249,23 +256,33 @@ void device_data_handler::parse_msg(common_session_ptr session, const device::id
 	{
 	case CMD_LOGIN:
 	{
+		bool is_new_device = false;
 		device_ptr dev = device_ptr(new device);
 		bool b_set_property = dev->set_property(str_body);
 		if (false == b_set_property)
 		{
 			LOG_ERROR("Parse property failed! Data:" << str_body);
-			session->close();
+			session->get_socket().get_io_service().post(boost::bind(&device_data_handler::asyn_close_session, this, session));
 			return;
 		}
 
-		dev->set_session(session);
-
 		static std::string json_ident_code = "ident_code";
 
-		dev->get_property(json_ident_code, local_dev_id);
-		dev->set_id(local_dev_id);
+		bool b_get = dev->get_property(json_ident_code, local_dev_id);
 
-		device_manager::instance().add(local_dev_id, dev);
+		device_ptr dev_get = device_manager::instance().get(local_dev_id);
+		if (dev_get != NULL)
+		{
+			dev_get->set_session(session);
+			dev_get->set_property(str_body);
+		}
+		else
+		{
+			is_new_device = true;
+			dev->set_id(local_dev_id);
+			dev->set_session(session);
+			device_manager::instance().add(local_dev_id, dev);
+		}
 
 		modify_session_buff(session, local_dev_id);
 
@@ -279,7 +296,7 @@ void device_data_handler::parse_msg(common_session_ptr session, const device::id
 		if (NULL == dev)
 		{
 			LOG_ERROR("Command: " << std::string(g_cmd_str[header.cmd].cmd_str) << " from unknown device " << dev_id);
-			session->close();
+			session->get_socket().get_io_service().post(boost::bind(&device_data_handler::asyn_close_session, this, session));
 			return;
 		}
 
@@ -317,7 +334,7 @@ void device_data_handler::process_by_lua(enum_lua_cmd_type lua_cmd, const msg_he
 	tsk.start();
 
 	std::string err_msg = tsk.get_error();
-	if (err_msg.empty() != false)
+	if (err_msg.empty() != true)
 	{
 		LOG_ERROR(err_msg);
 	}
@@ -350,5 +367,15 @@ void device_data_handler::process_by_lua(enum_lua_cmd_type lua_cmd, const msg_he
 		{
 			LOG_ERROR("Can't find device for " << local_dev_id);
 		}
+	}
+}
+
+void device_data_handler::asyn_close_session(common_session_ptr session)
+{
+	if (NULL != session)
+	{
+		LOG_TRACE("Post close session:" << session.get());
+
+		session->close();
 	}
 }

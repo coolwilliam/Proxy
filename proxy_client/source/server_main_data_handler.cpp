@@ -94,6 +94,8 @@ int server_main_data_handler::on_session_error(common_session_ptr session, int e
 
 void server_main_data_handler::add_session_buff(const map_session_buffer_t::value_type& item)
 {
+	boost::mutex::scoped_lock lck(m_mtx_session_buff);
+
 	map_session_buffer_t::iterator it_find = m_map_session_buff.find(item.first);
 	if (it_find != m_map_session_buff.end())
 	{
@@ -105,8 +107,10 @@ void server_main_data_handler::add_session_buff(const map_session_buffer_t::valu
 	}
 }
 
-void server_main_data_handler::get_session_buff(const map_session_buffer_t::key_type key, map_session_buffer_t::mapped_type& value_out) const
+void server_main_data_handler::get_session_buff(const map_session_buffer_t::key_type key, map_session_buffer_t::mapped_type& value_out)
 {
+	boost::mutex::scoped_lock lck(m_mtx_session_buff);
+	
 	map_session_buffer_t::const_iterator it_find = m_map_session_buff.find(key);
 	if (it_find != m_map_session_buff.end())
 	{
@@ -116,6 +120,8 @@ void server_main_data_handler::get_session_buff(const map_session_buffer_t::key_
 
 void server_main_data_handler::del_session_buff(const map_session_buffer_t::key_type key)
 {
+	boost::mutex::scoped_lock lck(m_mtx_session_buff);
+	
 	m_map_session_buff.erase(key);
 }
 
@@ -222,6 +228,7 @@ void server_main_data_handler::parse_msg(common_session_ptr session, const msg_h
 	{
 	case CMD_PROXY_REQUEST:
 	{
+		simple_kv_config_ptr cfg = client::instance().get_config();
 		RAPIDJSON_NAMESPACE::Document doc_request;
 		doc_request.Parse<RAPIDJSON_NAMESPACE::kParseNoFlags>(str_body.c_str());
 		if (doc_request.HasParseError() || doc_request.IsObject() == false)
@@ -274,9 +281,12 @@ void server_main_data_handler::parse_msg(common_session_ptr session, const msg_h
 
 			int			err_code;
 			std::string err_msg;
+			bool		ack_status = true;
+			std::string ack_message = "";
 
 			bool b_connect = false;
 			session_connection_ptr sc = session_connection_ptr(new session_connection);
+			sc->set_close_on_destroy(false);
 			//连接本地
 			std::string str_local_ip = "127.0.0.1";
 			common_client_ptr local_clt = common_client_ptr(new common_client(str_local_ip, clt_proxy_port, client::instance().get_ios()));
@@ -286,11 +296,27 @@ void server_main_data_handler::parse_msg(common_session_ptr session, const msg_h
 			boost::mutex::scoped_lock lck_lpdh(lpdh_ptr->get_handler_mtx());
 
 			b_connect = local_clt->start(err_code, err_msg);
+
 			if (false == b_connect)
 			{
 				LOG_ERROR("Connect to local [ip:" << str_local_ip << ", port:" << clt_proxy_port << "] failed! Error [code:" << err_code << ", msg:" << err_msg << "]");
-				break;
+				ack_status = false;
+				std::ostringstream __msg_oss;
+				__msg_oss << "Connect to local [ip:" << str_local_ip << ", port:" << clt_proxy_port << "] failed!";
+				ack_message = __msg_oss.str();
+
+				//break;
 			}
+
+			// 设置代理接收缓存大小
+			unsigned int proxy_cache_size = 0;
+			cfg->get(proxy_recv_cache_size, proxy_cache_size);
+
+			if (proxy_cache_size > 0 && b_connect)
+			{
+				local_clt->get_session()->set_recv_cache_size(proxy_cache_size);
+			}
+			
 
 			sc->set_session_id(s_id);
 			sc->set_session(local_clt->get_session());
@@ -310,8 +336,12 @@ void server_main_data_handler::parse_msg(common_session_ptr session, const msg_h
 				LOG_ERROR("Connect to proxy server [ip:" << server_proxy_ip << ", port:" << svr_proxy_port << "] failed! Error [code:" << err_code << ", msg:" << err_msg << "]");
 				break;
 			}
+
+			if (proxy_cache_size > 0)
+			{
+				svr_proxy_clt->get_session()->set_recv_cache_size(proxy_cache_size);
+			}
 			sc->set_session(svr_proxy_clt->get_session());
-			sc->set_close_on_destroy(false);
 
 			session_connection_manager::instance().add_session_connection(sc);
 
@@ -331,12 +361,11 @@ void server_main_data_handler::parse_msg(common_session_ptr session, const msg_h
 			ack_param_value.AddMember(RAPIDJSON_NAMESPACE::StringRef(member_session_id), s_id, ack_alloc);
 
 			std::string str_ident_code;
-			simple_kv_config_ptr cfg = client::instance().get_config();
 			cfg->get(device_id, str_ident_code);
 
 			ack_param_value.AddMember(RAPIDJSON_NAMESPACE::StringRef(member_ident_code), RAPIDJSON_NAMESPACE::StringRef(str_ident_code.c_str()), ack_alloc);
-			ack_param_value.AddMember(RAPIDJSON_NAMESPACE::StringRef(member_status), true, ack_alloc);
-			ack_param_value.AddMember(RAPIDJSON_NAMESPACE::StringRef(member_message), "", ack_alloc);
+			ack_param_value.AddMember(RAPIDJSON_NAMESPACE::StringRef(member_status), ack_status, ack_alloc);
+			ack_param_value.AddMember(RAPIDJSON_NAMESPACE::StringRef(member_message), RAPIDJSON_NAMESPACE::StringRef(ack_message.c_str()), ack_alloc);
 			ack_param_value.AddMember(RAPIDJSON_NAMESPACE::StringRef(member_client_proxy_port), clt_proxy_port, ack_alloc);
 
 			doc_ack.AddMember(RAPIDJSON_NAMESPACE::StringRef(member_param), ack_param_value, ack_alloc);
@@ -357,6 +386,46 @@ void server_main_data_handler::parse_msg(common_session_ptr session, const msg_h
 
 			svr_proxy_clt->get_session()->send_msg(str_send);
 		}
+
+		break;
+	}
+	case CMD_LOGIN_ACK:
+	{
+		RAPIDJSON_NAMESPACE::Document doc_request;
+		doc_request.Parse<RAPIDJSON_NAMESPACE::kParseNoFlags>(str_body.c_str());
+		if (doc_request.HasParseError() || doc_request.IsObject() == false)
+		{
+			LOG_ERROR("Parse failed, invalid json:" << str_body);
+			break;
+		}
+
+		static const char* member_stat = "stat";
+		static const char* member_ret = "ret";
+		static const char* member_proxy_recv_cache_size = "proxy_recv_cache_size";
+
+		vect_json_member_t vect_member;
+		vect_member.push_back(member_stat);
+		vect_member.push_back(member_ret);
+		if (check_json_member(doc_request, vect_member) == false)
+		{
+			LOG_ERROR("Invalid json: " << str_body);
+			break;
+		}
+
+		RAPIDJSON_NAMESPACE::Value& ret_val = doc_request[member_ret];
+
+		vect_member.clear();
+		vect_member.push_back(member_proxy_recv_cache_size);
+		if (check_json_member(ret_val, vect_member) == false)
+		{
+			break;
+		}
+
+		RAPIDJSON_NAMESPACE::Value& pcs = ret_val[member_proxy_recv_cache_size];
+		unsigned int proxy_cache_size = pcs.IsString() ? atoi(pcs.GetString()) : pcs.GetUint();
+		
+		client::instance().get_config()->set(proxy_recv_cache_size, proxy_cache_size);
+		LOG_TRACE("Set proxy receive cache size to " << proxy_cache_size);
 
 		break;
 	}

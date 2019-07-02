@@ -11,7 +11,7 @@ bug_stat=alpha
 extern_state=""
 
 #工程名称
-project_name=proxy_server
+project_name=iptv_server
 
 #检查输入的bug状态是否在规定的数组内
 #---start-----------------------

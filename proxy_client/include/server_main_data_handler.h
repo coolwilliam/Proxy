@@ -8,6 +8,7 @@
 
 /*boost headers*/
 #include "boost/unordered_map.hpp"
+#include "boost/thread/mutex.hpp"
 
 class server_main_data_handler :
 	public data_handler
@@ -30,13 +31,14 @@ private:
 	typedef boost::unordered_map<common_session_ptr, device_session_buffer_ptr> map_session_buffer_t;
 
 	void add_session_buff(const map_session_buffer_t::value_type& item);
-	void get_session_buff(const map_session_buffer_t::key_type key, map_session_buffer_t::mapped_type& value_out) const;
+	void get_session_buff(const map_session_buffer_t::key_type key, map_session_buffer_t::mapped_type& value_out);
 	void del_session_buff(const map_session_buffer_t::key_type key);
 
 	int decode_msg(common_session_ptr session, device_session_buffer_ptr dsb);
 	void parse_msg(common_session_ptr session, const msg_head_t& header, const std::string& str_body);
 private:
-	map_session_buffer_t m_map_session_buff;
+	map_session_buffer_t	m_map_session_buff;
+	boost::mutex			m_mtx_session_buff;
 
 };
 #endif // server_main_data_handler_h__

@@ -11,6 +11,8 @@ config_define(domain_ip);
 config_define(device_id);
 config_define(heartbeat_time);
 config_define(device_request_port);
+config_define(client_type);
+config_define(proxy_recv_cache_size);
 //}}
 
 bool check_json_member(const RAPIDJSON_NAMESPACE::Value& json_value, const vect_json_member_t& vect_member)
